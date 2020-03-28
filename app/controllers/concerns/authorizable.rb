@@ -7,9 +7,13 @@ module Authorizable
     rescue_from AuthenticationError, :with => :render_401
     
     def authorize_thermostat
-      unless params[:household_token].present? && params[:household_token] == thermostat.household_token
-        raise AuthenticationError
-      end
+      raise AuthenticationError unless authorized?
+    end
+
+    def authorized?
+      thermostat.present? && 
+      params[:household_token].present? && 
+      params[:household_token] == thermostat.household_token
     end
 
     def thermostat

@@ -68,3 +68,6 @@ Shoulda::Matchers.configure do |config|
     with.library :rails
   end
 end
+
+require 'sidekiq/testing'
+Sidekiq::Testing.fake!

@@ -5,3 +5,8 @@
 #
 #   movies = Movie.create([{ name: 'Star Wars' }, { name: 'Lord of the Rings' }])
 #   Character.create(name: 'Luke', movie: movies.first)
+
+Thermostat.create(household_token: 'test-1', location: "123 Fake St, Berlin")
+Thermostat.create(household_token: 'test-1', location: "123 Fake St, Berlin")
+
+Thermostat.create(household_token: 'test-2', location: "21 1st St, Berlin")
