@@ -2,7 +2,9 @@ class ReadingsController < ApplicationController
   include Authorizable
 
   def show
-    render json: {}, status: 200
+    @reading = thermostat.readings.find_by!(number: params[:number])
+
+    render json: @reading.data, status: 200
   end
 
   def create
