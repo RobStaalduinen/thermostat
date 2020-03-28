@@ -2,6 +2,36 @@ describe ThermostatReadingService do
   let!(:thermostat) { create(:thermostat) }
   let!(:service) { ThermostatReadingService.new(thermostat) }
 
+  describe "find_by_number" do
+    context "with no matching reading" do
+      it "raises NotFound error" do
+        expect{
+        service.find_by_number(12345)
+        }.to raise_error(ActiveRecord::RecordNotFound)
+      end
+    end
+
+    context "with matching reading in database" do
+      let!(:reading) { create(:reading, thermostat: thermostat) }
+
+      it "returns data hash" do
+        returned_reading = service.find_by_number(reading.number)
+        expect(returned_reading).to eq(reading.data)
+      end
+    end
+
+    context "with matching reading in cache" do
+      before do
+        service.create_async({temperature: 10, humidity: 10, battery_charge: 10})
+      end
+
+      it "returns data hash" do
+        returned_reading = service.find_by_number(1)
+        expect(returned_reading[:temperature]).to eq(10)
+      end
+    end
+  end
+
   describe "create_async" do
     it "queues job to persist reading" do
       expect {
