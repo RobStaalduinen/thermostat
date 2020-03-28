@@ -108,8 +108,54 @@ describe StatsController do
         expect(parsed_response['battery_charge']['min']).to eq(reading.battery_charge)
         expect(parsed_response['battery_charge']['max']).to eq(reading.battery_charge)
       end
-
     end
+
+    context "with readings in cache" do
+      before do
+        allow_any_instance_of(ThermostatReadingService).to receive(:cached_readings) { 
+          [Reading.new({ number: 2, temperature: 20.0, humidity: 20.0, battery_charge: 20.0 })] 
+        }
+      end
+
+      it "calculates based on cached readings" do
+        get :index, params: auth_params
+        parsed_response = JSON.parse(response.body)
+
+        expect(parsed_response['temperature']['average']).to eq(20.0)
+        expect(parsed_response['temperature']['min']).to eq(20.0)
+        expect(parsed_response['temperature']['max']).to eq(20.0)
+
+        expect(parsed_response['humidity']['average']).to eq(20.0)
+        expect(parsed_response['humidity']['min']).to eq(20.0)
+        expect(parsed_response['humidity']['max']).to eq(20.0)
+
+        expect(parsed_response['battery_charge']['average']).to eq(20.0)
+        expect(parsed_response['battery_charge']['min']).to eq(20.0)
+        expect(parsed_response['battery_charge']['max']).to eq(20.0)
+      end
+
+      context "in cache and db" do
+        let!(:reading) { create(:reading, thermostat: thermostat, temperature: 10.0, humidity: 10.0, battery_charge: 10.0) }
+        
+        it "calculates based on both readings" do
+          get :index, params: auth_params
+          parsed_response = JSON.parse(response.body)
+
+          expect(parsed_response['temperature']['average']).to eq(15.0)
+          expect(parsed_response['temperature']['min']).to eq(10.0)
+          expect(parsed_response['temperature']['max']).to eq(20.0)
+  
+          expect(parsed_response['humidity']['average']).to eq(15.0)
+          expect(parsed_response['humidity']['min']).to eq(10.0)
+          expect(parsed_response['humidity']['max']).to eq(20.0)
+  
+          expect(parsed_response['battery_charge']['average']).to eq(15.0)
+          expect(parsed_response['battery_charge']['min']).to eq(10.0)
+          expect(parsed_response['battery_charge']['max']).to eq(20.0)
+        end
+      end
+    end
+
 
   end
 

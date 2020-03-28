@@ -17,6 +17,7 @@
 require 'factory_bot_rails'
 require 'fakeredis'
 
+
 RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods
   # rspec-expectations config goes here. You can use an alternate
@@ -98,4 +99,8 @@ RSpec.configure do |config|
   # as the one that triggered the failure.
   Kernel.srand config.seed
 =end
+
+  config.before(:each) do
+    Redis.new.flushall
+  end
 end

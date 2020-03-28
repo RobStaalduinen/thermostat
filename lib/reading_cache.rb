@@ -5,20 +5,31 @@ class ReadingCache
   end
 
   def add(reading_number, value)
-    redis.set("#{@thermostat.id}-#{reading_number}", value.to_json)
+    redis.set(key_name(reading_number), value.to_json)
   end
 
   def get(reading_number)
-    result = redis.get("#{@thermostat.id}-#{reading_number}")
-    return nil unless result
-    JSON.parse(
-      result,
-      object_class: HashWithIndifferentAccess
+    parse_result(
+      redis.get(key_name(reading_number))
     )
   end
 
+  def get_all
+    redis.keys(key_name('*')).map { |key|
+      parse_result(redis.get(key))
+    }.compact
+  end
+
   def remove(reading_number)
-    redis.del("#{@thermostat.id}-#{reading_number}")
+    redis.del(key_name(reading_number))
+  end
+
+  def get_household_count
+    redis.get(@thermostat.household_token).to_i || 0
+  end
+
+  def set_household_count(new_count)
+    redis.set(@thermostat.household_token, new_count.to_i)
   end
 
   def lock
@@ -34,6 +45,14 @@ class ReadingCache
 
     def redis
       @redis_instance ||= RedisProvider.get_instance
+    end
+
+    def parse_result(result)
+      JSON.parse(result, object_class: HashWithIndifferentAccess) if result.present?
+    end
+
+    def key_name(matcher)
+      "#{@thermostat.id}-#{matcher}"
     end
 
 end

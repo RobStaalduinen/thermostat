@@ -5,38 +5,58 @@ class ThermostatReadingAggregator
   end
 
   def temperature
-    return default_results unless has_readings?
-    {
-      average: reading_results.temperature_sum / reading_results.total,
-      min: reading_results.temperature_min,
-      max: reading_results.temperature_max
-    }
+    attribute_stats('temperature')
   end
 
   def humidity
-    return default_results unless has_readings?
-    {
-      average: reading_results.humidity_sum / reading_results.total,
-      min: reading_results.humidity_min,
-      max: reading_results.humidity_max
-    }
+    attribute_stats('humidity')
   end
 
   def battery_charge
-    return default_results unless has_readings?
+    attribute_stats('battery_charge')
+  end
+
+  def attribute_stats(attribute)
+    return default_results unless has_readings? 
     {
-      average: reading_results.battery_charge_sum / reading_results.total,
-      min: reading_results.battery_charge_min,
-      max: reading_results.battery_charge_max
+      average: average_for_attribute(attribute),
+      min: min_for_attribute(attribute),
+      max: max_for_attribute(attribute)
     }
   end
 
+  def average_for_attribute(attribute)
+    database_sum = reading_results.send("#{attribute}_sum") || 0
+    cached_sum = cached_readings.map { |reading| reading.send(attribute) }.sum
+    total = (reading_results.total || 0) + cached_readings.size
+
+    return (database_sum + cached_sum) / total
+  end
+
+  def min_for_attribute(attribute)
+    [
+      reading_results.send("#{attribute}_min"),
+      cached_readings.map { |reading| reading.send(attribute) }.min
+    ].compact.min
+  end
+
+  def max_for_attribute(attribute)
+    [
+      reading_results.send("#{attribute}_max"),
+      cached_readings.map { |reading| reading.send(attribute) }.max
+    ].compact.max
+  end
+
   def has_readings?
-    @thermostat.readings.any?
+    @thermostat.readings.any? || cached_readings.any?
+  end
+
+  def cached_readings
+    @cached_readings = ThermostatReadingService.new(@thermostat).cached_readings
   end
 
   def reading_results
-    @results ||= @thermostat.readings.reorder(nil).select("
+    @results ||= @thermostat.readings.order(nil).select("
       SUM(temperature) as temperature_sum,
       MAX(temperature) as temperature_max,
       MIN(temperature) as temperature_min,
@@ -46,7 +66,7 @@ class ThermostatReadingAggregator
       SUM(battery_charge) as battery_charge_sum,
       MAX(battery_charge) as battery_charge_max,
       MIN(battery_charge) as battery_charge_min,
-      COUNT(distinct id) as total
+      COUNT(DISTINCT id) as total
     ").first
   end
 

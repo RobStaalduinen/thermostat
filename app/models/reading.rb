@@ -3,7 +3,7 @@ class Reading < ActiveRecord::Base
   belongs_to :thermostat
 
   def data
-    self.attributes.slice(*DATA_ATTRIBUTES)
+    self.attributes.slice(*DATA_ATTRIBUTES).with_indifferent_access
   end
 
   validates :thermostat, presence: true
