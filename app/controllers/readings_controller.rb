@@ -6,17 +6,25 @@ class ReadingsController < ApplicationController
   end
 
   def create
-    number = 1 # Assign temporary sequence
+    number = next_sequence_number
     ReadingPersister.perform_async(
       thermostat.id,
       reading_params.merge({number: number}).to_json
     )
-    render json: {}, status: 200
+    render json: { number: number }, status: 200
   end
 
   private
     def reading_params
       params.require(:reading).permit(:temperature, :humidity, :battery_charge)
+    end
+
+    # To be refactored elsewhere
+    def next_sequence_number
+      Reading.
+        joins(:thermostat).
+        where(thermostats: { household_token: thermostat.household_token }).
+        count + 1
     end
 
 end

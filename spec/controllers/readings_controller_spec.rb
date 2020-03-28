@@ -26,6 +26,33 @@ describe ReadingsController do
       end
     end
 
+  end
+
+  describe "create" do
+
+    describe "Authentication" do
+      context "with no household token" do
+        it "returns unauthorized status" do
+          post :create, params: { thermostat_id: thermostat.id }
+          expect(response.status).to eq(401)
+        end
+      end
+
+      context "with incorrect household token for thermostat" do
+        it "returns unauthorized status" do
+          post :create, params: { thermostat_id: thermostat.id, household_token: 'incorrect' }
+          expect(response.status).to eq(401)
+        end
+      end
+
+      context "with correct household token for thermostat" do
+        it "returns success" do
+          post :create, params: valid_params
+          expect(response.status).to eq(200)
+        end
+      end
+    end
+
     describe "Creation" do
       context "with missing theormostat" do
         it "returns not found" do
@@ -59,32 +86,14 @@ describe ReadingsController do
             expect(reading.battery_charge).to eq(valid_params[:reading][:battery_charge])
           end
         end
-      end
-    end
 
-  end
+        it "returns sequence number" do
+          Sidekiq::Testing.inline! do
+            post :create, params: valid_params
+            parsed_response = JSON.parse(response.body)
 
-  describe "create" do
-
-    describe "Authentication" do
-      context "with no household token" do
-        it "returns unauthorized status" do
-          post :create, params: { thermostat_id: thermostat.id }
-          expect(response.status).to eq(401)
-        end
-      end
-
-      context "with incorrect household token for thermostat" do
-        it "returns unauthorized status" do
-          post :create, params: { thermostat_id: thermostat.id, household_token: 'incorrect' }
-          expect(response.status).to eq(401)
-        end
-      end
-
-      context "with correct household token for thermostat" do
-        it "returns success" do
-          post :create, params: valid_params
-          expect(response.status).to eq(200)
+            expect(parsed_response['number']).to eq(Reading.last.number)
+          end
         end
       end
     end
