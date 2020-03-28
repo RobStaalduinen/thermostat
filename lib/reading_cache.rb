@@ -9,8 +9,10 @@ class ReadingCache
   end
 
   def get(reading_number)
+    result = redis.get("#{@thermostat.id}-#{reading_number}")
+    return nil unless result
     JSON.parse(
-      redis.get("#{@thermostat.id}-#{reading_number}"),
+      result,
       object_class: HashWithIndifferentAccess
     )
   end
