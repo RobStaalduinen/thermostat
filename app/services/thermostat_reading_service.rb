@@ -9,6 +9,8 @@ class ThermostatReadingService
     final_params = params.merge({number: number})
 
     reading_cache.add(number, final_params)
+    change_household_count(1)
+
     ReadingPersister.perform_async(
       @thermostat.id,
       final_params.to_json
@@ -21,6 +23,7 @@ class ThermostatReadingService
     number = params[:number]
     reading = @thermostat.readings.create(params)
     reading_cache.remove(number)
+    change_household_count(-1)
 
     reading
   end
@@ -29,12 +32,21 @@ class ThermostatReadingService
     @reading_cache = ReadingCache.new(@thermostat)
   end
 
+  def next_sequence_number
+    Reading.
+      joins(:thermostat).
+      where(thermostats: { household_token: @thermostat.household_token }).
+      count + household_count + 1
+  end
+
   private
-    def next_sequence_number
-      Reading.
-        joins(:thermostat).
-        where(thermostats: { household_token: @thermostat.household_token }).
-        count + 1
+    def household_count
+      reading_cache.get(@thermostat.household_token) || 0
+    end
+    
+    def change_household_count(increment)
+      count = reading_cache.get(@thermostat.household_token) || 0
+      reading_cache.add(@thermostat.household_token, count + increment)
     end
 
 end

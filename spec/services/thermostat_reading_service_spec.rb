@@ -40,6 +40,29 @@ describe ThermostatReadingService do
     end
   end
 
+  describe "next sequence number" do
+    context "with no current readings" do
+      it "returns 1" do
+        expect(service.next_sequence_number).to eq(1)
+      end
+    end
+
+    context "with one reading in database" do
+      let!(:reading) { create(:reading, thermostat: thermostat) }
+
+      it "returns 2" do
+        expect(service.next_sequence_number).to eq(2)
+      end
+    end
+
+    context "with one reading in cache" do
+      it "returns 2" do
+        service.create_async(valid_params)
+        expect(service.next_sequence_number).to eq(2)
+      end
+    end
+  end
+
   def valid_params
     attributes_for(:reading)
   end
