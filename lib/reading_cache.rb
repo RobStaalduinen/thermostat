@@ -21,6 +21,15 @@ class ReadingCache
     redis.del("#{@thermostat.id}-#{reading_number}")
   end
 
+  def lock
+    # Locking to the thermostat isn't exactly ideal here, as it requires a database connection.
+    # A better solution would be a distributed Redis lock, such as Redlock
+    # https://github.com/leandromoreira/redlock-rb
+    @thermostat.with_lock do
+      yield
+    end
+  end
+
   private
 
     def redis

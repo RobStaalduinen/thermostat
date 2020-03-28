@@ -5,37 +5,42 @@ class ThermostatReadingService
   end
 
   def find_by_number(number)
-    reading = @thermostat.readings.find_by(number: number)
-    reading = reading.present? ? reading.data : find_in_cache(number)
+    reading_cache.lock do
+      reading = @thermostat.readings.find_by(number: number)
+      reading = reading.present? ? reading.data : find_in_cache(number)
 
-    # Should probably be a custom exception, not ActiveRecord
-    raise ActiveRecord::RecordNotFound if reading.blank?
-
-    reading
+      # Should probably be a custom exception, not ActiveRecord
+      raise ActiveRecord::RecordNotFound if reading.blank?
+      reading
+    end
   end
 
   def create_async(params)
-    number = next_sequence_number
-    final_params = params.merge({number: number})
+    reading_cache.lock do
+      number = next_sequence_number
+      final_params = params.merge({number: number})
 
-    reading_cache.add(number, final_params)
-    change_household_count(1)
+      reading_cache.add(number, final_params)
+      change_household_count(1)
 
-    ReadingPersister.perform_async(
-      @thermostat.id,
-      final_params.to_json
-    )
+      ReadingPersister.perform_async(
+        @thermostat.id,
+        final_params.to_json
+      )
 
-    number
+      number
+    end
   end
 
   def create(params)
-    number = params[:number]
-    reading = @thermostat.readings.create(params)
-    reading_cache.remove(number)
-    change_household_count(-1)
+    reading_cache.lock do
+      number = params[:number]
+      reading = @thermostat.readings.create(params)
+      reading_cache.remove(number)
+      change_household_count(-1)
 
-    reading
+      reading
+    end
   end
 
   def reading_cache
