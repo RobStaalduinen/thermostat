@@ -137,6 +137,4 @@ describe ReadingsController do
     }
   end
 
-
-
 end
