@@ -27,9 +27,9 @@ class ThermostatReadingAggregator
   end
 
   def average_for_attribute(attribute)
-    database_sum = @database_readings.sum(attribute) || 0
+    database_sum = @database_readings.sum(attribute)
     cached_sum = @cached_readings.sum(attribute)
-    total = (@database_readings.total || 0) + @cached_readings.total
+    total = @database_readings.total + @cached_readings.total
 
     return (database_sum + cached_sum) / total
   end

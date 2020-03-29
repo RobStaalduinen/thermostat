@@ -5,7 +5,7 @@ class DatabaseReadingStats
   end
 
   def sum(attribute)
-    readings.send("#{attribute.to_s}_sum")
+    readings.send("#{attribute.to_s}_sum") || 0
   end
 
   def min(attribute)
@@ -17,7 +17,7 @@ class DatabaseReadingStats
   end
 
   def total
-    readings.total
+    readings.total  || 0
   end
 
   def any?
