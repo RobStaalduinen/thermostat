@@ -1,24 +1,14 @@
 # README
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+Thermostat API with asynchronous writing and consistent retrieval.
 
-Things you may want to cover:
+Uses a Redis caching layer to hold on to posted data until persistence, so that readings
+can be retrieved and included in stats prior to persistence completing.
 
-* Ruby version
-
-* System dependencies
-
-* Configuration
-
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+Built with:
+* Ruby 2.6.5
+* Rails 5.1.7
+* Redis 5.0.8
+* PostgreSQL
+* Sidekiq
+* RSpec

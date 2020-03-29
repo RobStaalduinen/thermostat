@@ -14,9 +14,9 @@ describe ThermostatReadingService do
     context "with matching reading in database" do
       let!(:reading) { create(:reading, thermostat: thermostat) }
 
-      it "returns data hash" do
+      it "returns reading" do
         returned_reading = service.find_by_number(reading.number)
-        expect(returned_reading).to eq(reading.data)
+        expect(returned_reading.id).to eq(reading.id)
       end
     end
 
@@ -25,9 +25,10 @@ describe ThermostatReadingService do
         service.create_async({temperature: 10, humidity: 10, battery_charge: 10})
       end
 
-      it "returns data hash" do
+      it "returns unpersisted reading" do
         returned_reading = service.find_by_number(1)
-        expect(returned_reading[:temperature]).to eq(10)
+        expect(returned_reading.temperature).to eq(10)
+        expect(returned_reading.persisted?).to eq(false)
       end
     end
   end
@@ -88,6 +89,16 @@ describe ThermostatReadingService do
     context "with one reading in cache" do
       it "returns 2" do
         service.create_async(valid_params)
+        expect(service.next_sequence_number).to eq(2)
+      end
+    end
+
+    context "with multiple readings for household" do
+      let!(:reading) { create(:reading, thermostat: thermostat) }
+      let!(:second_thermostat) { create(:thermostat) }
+      let!(:reading) { create(:reading, thermostat: second_thermostat) }
+
+      it "returns 3" do
         expect(service.next_sequence_number).to eq(2)
       end
     end

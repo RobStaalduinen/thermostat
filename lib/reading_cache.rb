@@ -6,6 +6,7 @@ class ReadingCache
 
   def add(reading_number, value)
     redis.set(key_name(reading_number), value.to_json)
+    change_household_count(1)
   end
 
   def get(reading_number)
@@ -22,6 +23,11 @@ class ReadingCache
 
   def remove(reading_number)
     redis.del(key_name(reading_number))
+    change_household_count(-1)
+  end
+  
+  def change_household_count(increment)
+    set_household_count(get_household_count + increment)
   end
 
   def get_household_count

@@ -4,7 +4,7 @@ class ReadingsController < ApplicationController
   def show
     @reading = thermostat_service.find_by_number(params[:number])
     
-    render json: @reading, status: 200
+    render json: @reading.data, status: 200
   end
 
   def create
